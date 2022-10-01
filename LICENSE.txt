@@ -1,32 +1,22 @@
 
-ThinkPHP遵循Apache2开源协议发布，并提供免费使用。
-版权所有Copyright © 2006-2016 by ThinkPHP (http://thinkphp.cn)
+Mihoyo API遵循MIT开源协议发布，并提供免费使用和商业使用。
+版权所有Copyright © 2021-2022 by 酷曦科技 (https://www.kuxi.tech)
 All rights reserved。
-ThinkPHP® 商标和著作权所有者为上海顶想信息科技有限公司。
+CoolxiTech® 商标和著作权所有者为湖南酷曦科技有限公司。
 
-Apache Licence是著名的非盈利开源组织Apache采用的协议。
-该协议和BSD类似，鼓励代码共享和尊重原作者的著作权，
-允许代码修改，再作为开源或商业软件发布。需要满足
-的条件： 
-1． 需要给代码的用户一份Apache Licence ；
-2． 如果你修改了代码，需要在被修改的文件中说明；
-3． 在延伸的代码中（修改和有源代码衍生的代码中）需要
-带有原来代码中的协议，商标，专利声明和其他原来作者规
-定需要包含的说明；
-4． 如果再发布的产品中包含一个Notice文件，则在Notice文
-件中需要带有本协议内容。你可以在Notice中增加自己的
-许可，但不可以表现为对Apache Licence构成更改。 
-具体的协议参考：http://www.apache.org/licenses/LICENSE-2.0
+MIT开源协议是许多软件授权中，被广泛使用的其中一种。
+该协议和三条款BSD类似，但是赋予软件被授权人更大的权利和更少的限制，
+允许代码修改，再作为开源或商业软件发布。需要满足的条件：
+1． 私人使用无需授权人的授权但不能擅自进行商业行为，商业使用需要获取授权人的授权，所带来的一切后果将由被授权人承担。
+2． 被授权人有权利使用、复制、修改、合并、出版发行、散布、再授权及贩售软件及软件的副本。
+3． 被授权人可根据程序的需要修改授权条款为适当的内容。
+4． 在软件和软件的所有副本中都必须包含版权声明和许可声明。
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGE.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+具体的协议参考：http://www.opensource.org/licenses/mit-license.php
