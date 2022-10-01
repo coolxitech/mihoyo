@@ -13,17 +13,18 @@ class Api extends BaseController
 
     /**
      * 米哈游登录
+     *
      * @param string $username 账号
      * @param string $password 密码
      * @param string $type 服务器(选填)
      * @return Json
      * @throws GuzzleException
      */
-    public function login(string $username, string $password, string $type = '') : Json
+    public function login() : Json
     {
-        $username = $username != '' ? $this->request->param('username') : $username;
-        $password = $password != '' ? $this->request->param('password') : $password;
-        $type = $type != '' ? $this->request->param('type') : $type;
+        $username = $this->request->param('username');
+        $password = $this->request->param('password');
+        $type = $this->request->param('type');
         //判断账号密码是否为空
         if($username == '' or $password == '') return $this->error(-1,'账号或密码不能为空');
         //根据不同的服务器区别登录来源
