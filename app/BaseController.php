@@ -99,42 +99,4 @@ abstract class BaseController
         return $v->failException(true)->check($data);
     }
 
-    /**
-     * 获取当前13位时间戳
-     * @access protected
-     * @return int
-     */
-    protected function getUnixTimestamp (): int
-    {
-        list($s1, $s2) = explode(' ', microtime());
-        return (int)sprintf('%.0f',(floatval($s1) + floatval($s2)) * 1000);
-    }
-
-    /**
-     * 返回成功的Json请求
-     * @access protected
-     * @param int $code 返回代码
-     * @param string $msg 返回消息
-     * @param array $data 返回数据
-     * @param int $response_code 返回状态码
-     * @return Json
-     */
-    protected function success(int $code,string $msg, array $data = [], int $response_code = 200):Json
-    {
-        return json(['code' => $code,'msg' => $msg,'data' => $data],$response_code);
-    }
-
-    /**
-     * 返回失败的Json请求
-     * @access protected
-     * @param int $code 返回代码
-     * @param string $msg 返回消息
-     * @param array $data 返回数据
-     * @param int $response_code 返回状态码
-     * @return Json
-     */
-    protected function error(int $code, string $msg,array $data = [],int $response_code = 500):Json
-    {
-        return json(['code' => $code,'msg' => $msg,'data' => $data],$response_code);
-    }
 }

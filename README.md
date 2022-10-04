@@ -15,6 +15,8 @@ Mihoyo API V1.0版本由[酷曦科技](https://www.kuxi.tech/)独家发布。
 
 ~~~
 git clone https://github.com/coolxitech/mihoyo.git
+cd mihoyo
+composer install
 ~~~
 
 如果需要更新功能使用
