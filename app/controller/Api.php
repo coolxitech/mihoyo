@@ -20,6 +20,7 @@ class Api extends BaseController
     {
         return Response::success(0,'欢迎来到米哈游API',[
             '登录' => [
+                'description' => '登录米哈游账号,支持国服和国际服',
                 'url' => '/api/login',
                 'params' => [
                     'username' => '账号',
@@ -28,14 +29,23 @@ class Api extends BaseController
                 ]
             ],
             '签到' => [
+                'description' => '原神签到,仅支持国服',
                 'url' => '/api/signin',
                 'headers' => [
                     'cookie' => '米哈游Cookie'
                 ],
                 'params' => [
-                    'region' => '服务器',
-                    'uid' => '游戏ID'
+                    'region' => '服务器(选填,拥有多个角色必填)',
+                    'uid' => '游戏ID(选填,拥有多个角色必填)'
                 ]
+            ],
+            '获取游戏信息' => [
+                'description' => '获取游戏角色信息列表',
+                'url' => '/api/getgameinfo',
+                'headers' => [
+                    'cookie' => '米哈游Cookie'
+                ],
+                'params' => []
             ]
         ]);
     }
@@ -75,8 +85,6 @@ class Api extends BaseController
         if(!isset($login_data['account_info'])) return Response::error(-3,$login_data['message']);//没有账号信息即报错
         return Response::success(0,'登录成功',$login_data);
     }
-
-
 
     /**
      * 获取国际服极验验证码参数
@@ -121,7 +129,7 @@ class Api extends BaseController
      */
     private function identification_codes(string $gt, string $challenge, string $referer) : array
     {
-        //建议自行替换其他方式,当前打码平台不支持国际版极验,https://rrocr.com/user/register.html
+        //建议自行替换其他平台,当前打码平台不支持国际版极验,https://rrocr.com/user/register.html
         $request = $this->client->post('http://api.rrocr.com/api/recognize.html',[
             'query' => [
                 'appkey' => '',
@@ -217,7 +225,13 @@ class Api extends BaseController
         return ['account_info' => $login_data['data']['account_info'],'cookies' => $cookies];
     }
 
-    public function signIn()
+    /**
+     * 原神签到
+     * @access public
+     * @return Json
+     * @throws GuzzleException
+     */
+    public function signIn(): Json
     {
         $region = $this->request->param('region');
         $uid = $this->request->param('uid');
@@ -229,7 +243,6 @@ class Api extends BaseController
             'cookies' => $cookieJar
         ]);
         $result = $request->getBody()->getContents();
-//        $game_cookies = $request->getHeaders()['Set-Cookie'];
         $game_info = json_decode($result,true);
         if($game_info['retcode'] != 0) return Response::error(-2,'获取游戏信息失败');
         //防止账号下多个游戏角色
@@ -300,5 +313,17 @@ class Api extends BaseController
 
     }
 
-
+    public function getGameInfo() : Json
+    {
+        $cookies = $this->request->cookie();
+        if(empty($cookies)) return Response::error(-1,'Cookie不能为空');
+        $cookieJar = CookieJar::fromArray($cookies,'.mihoyo.com');
+        $request = $this->client->request('GET','https://api-takumi.mihoyo.com/binding/api/getUserGameRolesByCookie?game_biz=hk4e_cn',[
+            'cookies' => $cookieJar
+        ]);
+        $result = $request->getBody()->getContents();
+        $game_info = json_decode($result,true);
+        if($game_info['retcode'] != 0) return Response::error(-2,'获取游戏信息失败');
+        return Response::success(0,'获取成功',$game_info['data']['list']);
+    }
 }

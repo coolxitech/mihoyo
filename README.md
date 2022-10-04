@@ -9,6 +9,7 @@ Mihoyo API V1.0版本由[酷曦科技](https://www.kuxi.tech/)独家发布。
 
 * 使用`ThinkPHP6`框架作为API强力驱动
 * 采用`PHP7`强类型（严格模式）
+* 支持`GET/POST`请求
 * 支持Html模板渲染,详情[ThinkPHP文档](https://www.kancloud.cn/manual/thinkphp6_0/content)
 
 ## 安装

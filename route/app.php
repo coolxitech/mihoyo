@@ -3,6 +3,12 @@
 use think\facade\Route;
 
 Route::group('api',function (){
-    Route::get('login','Api/login');//支持GET类型请求
-    Route::post('login','Api/login');//支持POST类型请求
+    Route::get('login','Api/login');
+    Route::post('login','Api/login');
+
+    Route::get('signin','Api/signIn');
+    Route::post('signin','Api/signIn');
+
+    Route::get('getgameinfo','Api/getGameInfo');
+    Route::post('getgameinfo','Api/getGameInfo');
 });
