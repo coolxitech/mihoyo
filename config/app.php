@@ -21,6 +21,8 @@ return [
     'domain_bind'      => [],
     // 禁止URL访问的应用列表（自动多应用模式有效）
     'deny_app_list'    => [],
+    //在线获取其他仓库的密钥
+    'online_key' => true,
 
     // 异常页面的模板文件
     'exception_tmpl'   => app()->getThinkPath() . 'tpl/think_exception.tpl',
