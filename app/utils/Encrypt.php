@@ -9,11 +9,12 @@ class Encrypt
      *
      * 密钥并不是实时更新请到Config目录的key.php文件修改
      * @param string $data 欲加密数据
+     * @param string $key 密钥
      * @return string
      */
-    public static function password(string $data = ''): string
+    public static function RSA(string $data,string $key): string
     {
-        openssl_public_encrypt($data,$encrypted,Config('key.mihoyo_public_key'));
+        openssl_public_encrypt($data,$encrypted,$key);
         return base64_encode($encrypted);
     }
 
@@ -43,10 +44,9 @@ class Encrypt
         $timestamp = (string)time();
         $random_string = Str::random_string(6);
         $params = json_encode($params);
-        $encrypt = "salt=$salt&t=$timestamp&r=$random_string&b=$params&q=";
-        $md5 = md5($encrypt);
-        return "$timestamp,$random_string,$md5";
-
+        $ds_string = "salt=$salt&t=$timestamp&r=$random_string&b=$params&q=";
+        $ds_md5 = md5($ds_string);
+        return "$timestamp,$random_string,$ds_md5";
     }
 
 
