@@ -59,7 +59,7 @@ class Api extends BaseController
      * @return Json
      * @throws GuzzleException
      */
-    public function login() : Json
+    public function web_login() : Json
     {
         $username = $this->request->param('username');
         $password = $this->request->param('password');
@@ -84,6 +84,65 @@ class Api extends BaseController
         }
         if(!isset($login_data['account_info'])) return Response::error(-3,$login_data['message']);//没有账号信息即报错
         return Response::success(0,'登录成功',$login_data);
+    }
+
+    /**
+     * 米游社APP登录
+     *
+     * @param string $username 账号
+     * @param string $password 密码
+     * @return Json
+     * @throws GuzzleException
+     */
+    public function app_login() : Json
+    {
+        $username = $this->request->param('username');
+        $password = $this->request->param('password');
+        $region = $this->request->param('region');
+        //判断账号密码是否为空
+        if($username == '' or $password == '') return Response::error(-1,'账号或密码不能为空');
+
+        //请求登录
+        try {
+            $data = [
+                'password' => Encrypt::RSA($password,Config('key.mihoyo_app_public_key')),
+                'account' => Encrypt::RSA($username,Config('key.mihoyo_app_public_key'))
+            ];
+//            halt(Encrypt::newDS(Config('key.cn_app_salt'),$data));
+            $request = $this->client->post('https://passport-api.mihoyo.com/account/ma-cn-passport/app/loginByPassword',[
+                'json' => $data,
+                'headers' => [
+                    'DS' => Encrypt::newDS(Config('key.cn_app_salt'),$data),
+                    'x-rpc-app_version' => Config('key.app_version'),
+                    'x-rpc-client_type' => 2,
+                    'x-rpc-app_id' => 'bll8iq97cem8'
+                ]
+            ]);
+            $result = $request->getBody()->getContents();
+            $login_data = json_decode($result,true);
+            if($login_data['retcode'] == -3101){
+                $session_Id = json_decode($request->getHeader('X-Rpc-Aigis')[0],true)['session_id'];
+                $geetest_info = json_decode(json_decode($request->getHeader('X-Rpc-Aigis')[0],true)['data'],true);
+                unset($geetest_info['success'],$geetest_info['new_captcha']);
+                $captcha = $this->identification_codes($geetest_info['gt'],$geetest_info['challenge'],'https://passport-api.mihoyo.com/account/ma-cn-passport/app/loginByPassword');
+                $request = $this->client->post('https://passport-api.mihoyo.com/account/ma-cn-passport/app/loginByPassword',[
+                    'json' => $data,
+                    'headers' => [
+                        'DS' => Encrypt::newDS(Config('key.cn_app_salt'),$data),
+                        'x-rpc-app_version' => Config('key.app_version'),
+                        'x-rpc-client_type' => 2,
+                        'x-rpc-app_id' => 'bll8iq97cem8',
+                        'x-rpc-aigis' => "$session_Id;" . base64_encode(json_encode(['geetest_challenge' => $captcha['challenge'],'geetest_seccode' => $captcha['validate'] . '|jordan','geetest_validate' => $captcha['validate']]))
+                    ]
+                ]);
+                $result = $request->getBody()->getContents();
+                $login_data = json_decode($result,true);
+            }
+        } catch (GuzzleException $e) {
+            return Response::error(-4,'请求发送失败:' . $e->getMessage());//国际服不使用海外代理可能会超时
+        }
+        if($login_data['retcode'] != 0) return Response::error(-3,'登录错误',[$login_data['message']]);
+        return Response::success(0,'登录成功',$login_data['data']);
     }
 
     /**
@@ -167,7 +226,7 @@ class Api extends BaseController
                 'is_bh2' => false,
                 'is_crypto' => true,
                 'mmt_key' => $mmt_key,
-                'password' => Encrypt::password($password),
+                'password' => Encrypt::RSA($password,Config('key.mihoyo_web_public_key')),
                 'token_type' => 6
             ]
         ]);
@@ -231,7 +290,7 @@ class Api extends BaseController
      * @return Json
      * @throws GuzzleException
      */
-    public function signIn(): Json
+    public function genshin_signIn(): Json
     {
         $region = $this->request->param('region');
         $uid = $this->request->param('uid');

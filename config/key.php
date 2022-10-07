@@ -15,14 +15,21 @@ if(Config('app.online_key')){
 }
 
 return [
-    'mihoyo_public_key'=> '-----BEGIN PUBLIC KEY-----
+    'mihoyo_web_public_key'=> '-----BEGIN PUBLIC KEY-----
 MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDDvekdPMHN3AYhm/vktJT+YJr7
 cI5DcsNKqdsx5DZX0gDuWFuIjzdwButrIYPNmRJ1G8ybDIF7oDW2eEpm5sMbL9zs
 9ExXCdvqrn51qELbqj0XxtMTIpaCHFSI50PfPpTFV9Xt/hmyVwokoOXFlAEgCn+Q
 CgGs52bFoYMtyi+xEQIDAQAB
 -----END PUBLIC KEY-----
 ',
+    'mihoyo_app_public_key' => "-----BEGIN PUBLIC KEY-----
+MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDDvekdPMHN3AYhm/vktJT+YJr7
+cI5DcsNKqdsx5DZX0gDuWFuIjzdwButrIYPNmRJ1G8ybDIF7oDW2eEpm5sMbL9zs
+9ExXCdvqrn51qELbqj0XxtMTIpaCHFSI50PfPpTFV9Xt/hmyVwokoOXFlAEgCn+Q
+CgGs52bFoYMtyi+xEQIDAQAB
+-----END PUBLIC KEY-----",
     'cn_web_salt' => $salt,
     'os_web_salt' => 'n0KjuIrKgLHh08LWSCYP0WXlVXaYvV64',
+    'cn_app_salt' => 'JwYDpKvLj6MrMqqYU6jTKF17KNO2PXoS',
     'app_version' => $version
 ];
