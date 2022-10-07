@@ -123,7 +123,7 @@ class Api extends BaseController
                     'DS' => Encrypt::newDS(Config('key.cn_app_salt'),$data),
                     'x-rpc-app_version' => Config('key.app_version'),
                     'x-rpc-client_type' => 2,
-                    'x-rpc-app_id' => 'bll8iq97cem8'
+                    'x-rpc-app_id' => Config('key.app_id')
                 ]
             ]);
             $result = $request->getBody()->getContents();
@@ -214,7 +214,7 @@ class Api extends BaseController
         //建议自行替换其他平台,当前打码平台不支持国际版极验,https://rrocr.com/user/register.html
         $request = $this->client->post('http://api.rrocr.com/api/recognize.html',[
             'query' => [
-                'appkey' => 'b3d5a714d7684a909421fc92bc40f5ec',
+                'appkey' => '',
                 'gt' => $gt,
                 'challenge' => $challenge,
                 'referer' => $referer,
