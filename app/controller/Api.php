@@ -150,7 +150,22 @@ class Api extends BaseController
             return Response::error(-4,'请求发送失败:' . $e->getMessage());//国际服不使用海外代理可能会超时
         }
         if($login_data['retcode'] != 0) return Response::error(-3,'登录错误',[$login_data['message']]);
-        return Response::success(0,'登录成功',$login_data['data']);
+        $cookieJAR = CookieJar::fromArray([
+            'stoken' => $login_data['data']['token']['token'],
+            'mid' => $login_data['data']['user_info']['mid']
+        ],'.mihoyo.com');
+        $request = $this->client->get('https://passport-api.mihoyo.com/account/auth/api/getLTokenBySToken',[
+            'headers' => [
+                'DS' => Encrypt::newDS(config('key.cn_app_salt'),[
+                    'stoken=' . $login_data['data']['token']['token'].';mid='.$login_data['data']['user_info']['mid']
+                ])
+            ],
+            'cookies' => $cookieJAR
+        ]);
+        $result = $request->getBody()->getContents();
+        $cookies = json_decode($result,true);
+        if($cookies['retcode'] != 0) return Response::error(-5,'获取cookie失败');
+        return Response::success(0,'登录成功',['account_info' => $login_data['data'],'cookies' => $cookies['data']]);
     }
 
     /**
@@ -199,7 +214,7 @@ class Api extends BaseController
         //建议自行替换其他平台,当前打码平台不支持国际版极验,https://rrocr.com/user/register.html
         $request = $this->client->post('http://api.rrocr.com/api/recognize.html',[
             'query' => [
-                'appkey' => '',
+                'appkey' => 'b3d5a714d7684a909421fc92bc40f5ec',
                 'gt' => $gt,
                 'challenge' => $challenge,
                 'referer' => $referer,
