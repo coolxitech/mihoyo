@@ -139,7 +139,7 @@ class Api extends BaseController
                         'DS' => Encrypt::newDS(Config('key.cn_app_salt'),$data),
                         'x-rpc-app_version' => Config('key.app_version'),
                         'x-rpc-client_type' => 2,
-                        'x-rpc-app_id' => 'bll8iq97cem8',
+                        'x-rpc-app_id' => Config('key.app_id'),
                         'x-rpc-aigis' => "$session_Id;" . base64_encode(json_encode(['geetest_challenge' => $captcha['challenge'],'geetest_seccode' => $captcha['validate'] . '|jordan','geetest_validate' => $captcha['validate']]))
                     ]
                 ]);

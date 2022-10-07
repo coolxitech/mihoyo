@@ -31,5 +31,6 @@ CgGs52bFoYMtyi+xEQIDAQAB
     'cn_web_salt' => $salt,
     'os_web_salt' => 'n0KjuIrKgLHh08LWSCYP0WXlVXaYvV64',
     'cn_app_salt' => 'JwYDpKvLj6MrMqqYU6jTKF17KNO2PXoS',
-    'app_version' => $version
+    'app_version' => $version,
+    'app_id' => 'bll8iq97cem8'
 ];
