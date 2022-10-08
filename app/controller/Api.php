@@ -67,7 +67,7 @@ class Api extends BaseController
      * @return Json
      * @throws GuzzleException
      */
-    public function web_login() : Json
+    public function web_login($function = false)
     {
         $username = $this->request->param('username');
         $password = $this->request->param('password');
@@ -91,6 +91,7 @@ class Api extends BaseController
             return Response::error(-4,'请求发送失败:' . $e->getMessage());//国际服不使用海外代理可能会超时
         }
         if(!isset($login_data['account_info'])) return Response::error(-3,$login_data['message']);//没有账号信息即报错
+        if($function) return $login_data;
         return Response::success(0,'登录成功',$login_data);
     }
 
@@ -211,21 +212,41 @@ class Api extends BaseController
      */
     private function identification_codes(string $gt, string $challenge, string $referer) : array
     {
-        //建议自行替换其他平台,当前打码平台不支持国际版极验,https://rrocr.com/user/register.html
-        $request = $this->client->post('http://api.rrocr.com/api/recognize.html',[
-            'query' => [
-                'appkey' => '',
+        //建议自行替换其他平台,我用这个打码平台不支持国际版极验,https://rrocr.com/user/register.html
+        //公益打码接口,觉得好用请自行采购,价格不是很贵,充个十块钱能用个一两个月.需要对接其他平台请注释公益接口
+
+        $request = $this->client->post('https://api.kuxi.tech/crack/geetest',[
+            'form_params' => [
                 'gt' => $gt,
                 'challenge' => $challenge,
-                'referer' => $referer,
-                'sharecode' => '585dee4d4ef94e1cb95d5362a158ea54'
+                'referer' => $referer
             ],
             'timeout' => 60
         ]);
         $result = $request->getBody()->getContents();
         $code_data = json_decode($result,true);
-        if($code_data['status'] != 0) throw new Exception('错误代码:' . $code_data['code']);
+        if($code_data['code'] != 0) throw new Exception('错误信息:' . $code_data['msg']);
         return $code_data['data'];
+
+        //下面是我目前所用平台的调用代码,如果你买了这个平台的服务请注释上面的代码
+//        $request = $this->client->get('http://api.rrocr.com/api/integral.html?appkey=');
+//        $result = $request->getBody()->getContents();
+//        $integral_data = json_decode($result,true);
+//        if($integral_data['status'] == -1) return Response::error(-2,'打码积分查询失败');
+//        if($integral_data['integral'] <= 10) Response::error(-2,'积分不足,请联系管理员');
+//        $request = $this->client->post('http://api.rrocr.com/api/recognize.html',[
+//            'form_params' => [
+//                'appkey' => '',
+//                'gt' => $gt,
+//                'challenge' => $challenge,
+//                'referer' => $referer,
+//                'sharecode' => '585dee4d4ef94e1cb95d5362a158ea54'//平台的邀请密钥勿删谢谢
+//            ],
+//            'timeout' => 60
+//        ]);
+//        $result = $request->getBody()->getContents();
+//        $code_data = json_decode($result,true);
+//        return $code_data['data'];
     }
 
     /**
@@ -287,7 +308,7 @@ class Api extends BaseController
                 'geetest_validate' => $validate,
                 'is_crypto' => true,
                 'mmt_key' => $mmt_key,
-                'password' => Encrypt::password($password),
+                'password' => Encrypt::RSA($password,Config('key.mihoyo_web_public_key')),
                 'token_type' => 4
             ],
             'headers' => [
@@ -384,7 +405,6 @@ class Api extends BaseController
             $result = $request->getBody()->getContents();
             $data = json_decode($result,true);
         }
-
         if($data['retcode'] == -5003){
             return Response::success(1,'已经签到过了');
         }elseif ($data['retcode'] == 0 and $data['data']['risk_code'] == 0){
@@ -392,7 +412,6 @@ class Api extends BaseController
         }else{
             return Response::error(-6,'未知错误',$data);
         }
-
     }
 
     public function getGameInfo() : Json
