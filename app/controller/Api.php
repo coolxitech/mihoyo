@@ -211,21 +211,41 @@ class Api extends BaseController
      */
     private function identification_codes(string $gt, string $challenge, string $referer) : array
     {
-        //建议自行替换其他平台,当前打码平台不支持国际版极验,https://rrocr.com/user/register.html
-        $request = $this->client->post('http://api.rrocr.com/api/recognize.html',[
-            'query' => [
-                'appkey' => '',
+        //建议自行替换其他平台,我用这个打码平台不支持国际版极验,https://rrocr.com/user/register.html
+        //公益打码接口,觉得好用请自行采购,价格不是很贵,充个十块钱能用个一两个月.需要对接其他平台请注释公益接口
+
+        $request = $this->client->post('https://api.kuxi.tech/crack/geetest',[
+            'form_params' => [
                 'gt' => $gt,
                 'challenge' => $challenge,
-                'referer' => $referer,
-                'sharecode' => '585dee4d4ef94e1cb95d5362a158ea54'
+                'referer' => $referer
             ],
             'timeout' => 60
         ]);
         $result = $request->getBody()->getContents();
         $code_data = json_decode($result,true);
-        if($code_data['status'] != 0) throw new Exception('错误代码:' . $code_data['code']);
-        return $code_data['data'];
+        if($code_data['data']['status'] != 0) throw new Exception('错误代码:' . $code_data['code']);
+        return $code_data['data']['data'];
+
+        //下面是我目前所用平台的调用代码,如果你买了这个平台的服务请注释上面的代码
+//        $request = $this->client->get('http://api.rrocr.com/api/integral.html?appkey=d001f9b28f4f4c8496ef9a3110ea24f4');
+//        $result = $request->getBody()->getContents();
+//        $integral_data = json_decode($result,true);
+//        if($integral_data['status'] == -1) return Response::error(-2,'打码积分查询失败');
+//        if($integral_data['integral'] <= 10) Response::error(-2,'积分不足,请联系管理员');
+//        $request = $this->client->post('http://api.rrocr.com/api/recognize.html',[
+//            'form_params' => [
+//                'appkey' => '',
+//                'gt' => $gt,
+//                'challenge' => $challenge,
+//                'referer' => $referer,
+//                'sharecode' => '585dee4d4ef94e1cb95d5362a158ea54'//平台的邀请密钥勿删谢谢
+//            ],
+//            'timeout' => 60
+//        ]);
+//        $result = $request->getBody()->getContents();
+//        $code_data = json_decode($result,true);
+//        return $code_data['data'];
     }
 
     /**
