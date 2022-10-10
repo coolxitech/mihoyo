@@ -67,7 +67,7 @@ class Api extends BaseController
      * @return Json
      * @throws GuzzleException
      */
-    public function web_login($function = false)
+    public function web_login() : Json
     {
         $username = $this->request->param('username');
         $password = $this->request->param('password');
@@ -91,7 +91,6 @@ class Api extends BaseController
             return Response::error(-4,'请求发送失败:' . $e->getMessage());//国际服不使用海外代理可能会超时
         }
         if(!isset($login_data['account_info'])) return Response::error(-3,$login_data['message']);//没有账号信息即报错
-        if($function) return $login_data;
         return Response::success(0,'登录成功',$login_data);
     }
 
@@ -405,6 +404,7 @@ class Api extends BaseController
             $result = $request->getBody()->getContents();
             $data = json_decode($result,true);
         }
+
         if($data['retcode'] == -5003){
             return Response::success(1,'已经签到过了');
         }elseif ($data['retcode'] == 0 and $data['data']['risk_code'] == 0){
@@ -412,6 +412,7 @@ class Api extends BaseController
         }else{
             return Response::error(-6,'未知错误',$data);
         }
+
     }
 
     public function getGameInfo() : Json
