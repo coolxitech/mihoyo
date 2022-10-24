@@ -90,7 +90,7 @@ class Api extends BaseController
         } catch (GuzzleException $e) {
             return Response::error(-4,'请求发送失败:' . $e->getMessage());//国际服不使用海外代理可能会超时
         }
-        if(!isset($login_data['account_info'])) return Response::error(-3,$login_data['message']);//没有账号信息即报错
+        if(!isset($login_data['account_info'])) return Response::error(-3,'登录失败');//没有账号信息即报错
         return Response::success(0,'登录成功',$login_data);
     }
 
@@ -279,6 +279,35 @@ class Api extends BaseController
         $source_cookies = $request->getHeaders()['Set-Cookie'];
         $cookies = [];
         foreach ($source_cookies as $cookie){
+            preg_match('/(.*?)=(.*?); Path/',$cookie,$matches);
+            if($matches[1] == 'aliyungf_tc') continue;//剔除阿里云的Cookie
+            $cookies[$matches[1]] = $matches[2];
+        }
+        $mohoyo_user_mmt = $this->mihoyo_mmt();
+        try{
+            $code_data = $this->identification_codes($mohoyo_user_mmt['gt'],$mohoyo_user_mmt['challenge'],'https://user.mihoyo.com/');
+        }catch (\Exception $e){
+            return [];
+        }
+
+        $request = $this->client->request('POST','https://webapi.account.mihoyo.com/Api/login_by_password',[
+            'form_params' => [
+                'account' => $username,
+                'password' => Encrypt::RSA($password,Config('key.mihoyo_web_public_key')),
+                'mmt_key' => $mohoyo_user_mmt['mmt_key'],
+                'is_crypto' => true,
+                'geetest_challenge' => $code_data['challenge'],
+                'geetest_validate' => $code_data['validate'],
+                'geetest_seccode' => $code_data['validate'] . '|jordan',
+                'source' => 'user.mihoyo.com',
+                't' => Time::getUnixTimestamp()
+            ]
+        ]);
+        $result = $request->getBody()->getContents();
+        $mohoyo_user_login_data = json_decode($result,true);
+        if($mohoyo_user_login_data['code'] != 200) return [];
+        $mohoyo_user_source_cookies = $request->getHeaders()['Set-Cookie'];
+        foreach ($mohoyo_user_source_cookies as $cookie){
             preg_match('/(.*?)=(.*?); Path/',$cookie,$matches);
             if($matches[1] == 'aliyungf_tc') continue;//剔除阿里云的Cookie
             $cookies[$matches[1]] = $matches[2];
