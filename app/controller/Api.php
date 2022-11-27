@@ -106,7 +106,6 @@ class Api extends BaseController
     {
         $username = $this->request->param('username');
         $password = $this->request->param('password');
-        $region = $this->request->param('region');
         //判断账号密码是否为空
         if($username == '' or $password == '') return Response::error(-1,'账号或密码不能为空');
 
@@ -213,9 +212,13 @@ class Api extends BaseController
     {
         //建议自行替换其他平台,我用这个打码平台不支持国际版极验,https://rrocr.com/user/register.html
         //公益打码接口,觉得好用请自行采购,价格不是很贵,充个十块钱能用个一两个月.需要对接其他平台请注释公益接口
+        //公益接口注册地址:https://ocr.kuxi.tech/user/login
 
-        $request = $this->client->post('https://api.kuxi.tech/crack/geetest',[
+        //公益打码代码开始
+        $token = '';
+        $request = $this->client->post('https://api.ocr.kuxi.tech/api/recognize',[
             'form_params' => [
+                'token' => $token,
                 'gt' => $gt,
                 'challenge' => $challenge,
                 'referer' => $referer
@@ -226,16 +229,18 @@ class Api extends BaseController
         $code_data = json_decode($result,true);
         if($code_data['code'] != 0) throw new Exception('错误信息:' . $code_data['msg']);
         return $code_data['data'];
+        //公益打码代码结束
 
         //下面是我目前所用平台的调用代码,如果你买了这个平台的服务请注释上面的代码
-//        $request = $this->client->get('http://api.rrocr.com/api/integral.html?appkey=');
+//        $appkey = '';
+//        $request = $this->client->get('http://api.rrocr.com/api/integral.html?appkey=' . $appkey);
 //        $result = $request->getBody()->getContents();
 //        $integral_data = json_decode($result,true);
 //        if($integral_data['status'] == -1) return Response::error(-2,'打码积分查询失败');
 //        if($integral_data['integral'] <= 10) Response::error(-2,'积分不足,请联系管理员');
 //        $request = $this->client->post('http://api.rrocr.com/api/recognize.html',[
 //            'form_params' => [
-//                'appkey' => '',
+//                'appkey' => $appkey,
 //                'gt' => $gt,
 //                'challenge' => $challenge,
 //                'referer' => $referer,

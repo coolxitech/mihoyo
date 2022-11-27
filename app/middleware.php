@@ -7,4 +7,5 @@ return [
     // \think\middleware\LoadLangPack::class,
     // Session初始化
     // \think\middleware\SessionInit::class
+    \app\middleware\AllowCross::class
 ];

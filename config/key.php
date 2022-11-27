@@ -11,7 +11,7 @@ if(Config('app.online_key')){
     $version = $matches[1];
 }else{
     $salt = 'yUZ3s0Sna1IrSNfk29Vo6vRapdOyqyhB';
-    $version = '2.38.1';
+    $version = '2.40.0';
 }
 
 return [

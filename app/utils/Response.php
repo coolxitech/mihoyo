@@ -29,7 +29,7 @@ class Response
      * @param int $response_code 返回状态码
      * @return Json
      */
-    public static function error(int $code, string $msg,array $data = [],int $response_code = 500):Json
+    public static function error(int $code, string $msg,array $data = [],int $response_code = 200):Json
     {
         return json(['code' => $code,'msg' => $msg,'data' => $data],$response_code);
     }
