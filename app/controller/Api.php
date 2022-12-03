@@ -15,6 +15,7 @@ use Ramsey\Uuid\Uuid;
 class Api extends BaseController
 {
     protected string $referer = '';//请求来源,极验验证码识别需求
+    protected int $try = 5;
 
     public function index()
     {
@@ -81,6 +82,8 @@ class Api extends BaseController
             $login_data = $this->mihoyo_login($username, $password);
         } catch (GuzzleException $e) {
             return Response::error(-4,'请求发送失败:' . $e->getMessage());
+        } catch (Exception $e){
+            return Response::error(-5,$e->getMessage());
         }
         if(!isset($login_data['account_info'])) return Response::error(-3,'登录失败',$login_data);//没有账号信息即报错
         return Response::success(0,'登录成功',$login_data);
@@ -253,35 +256,52 @@ class Api extends BaseController
      * @return array
      * @throws GuzzleException
      */
-    public function mihoyo_login(string $username, string $password) : array
+    private function mihoyo_login(string $username, string $password) : array
     {
         $this->referer = 'https://user.miyoushe.com/';
         //开始第一次登录
-        $request = $this->client->request('POST',"https://passport-api.miyoushe.com/account/ma-cn-passport/web/loginByPassword",[
+        $try = 0;
+        first:
+        try{
+            $mihoyo_mmt = $this->mihoyo_mmt();
+            $captcha = $this->identification_codes($mihoyo_mmt['gt'],$mihoyo_mmt['challenge'],$this->referer);
+        }catch (Exception $e){
+            if($try < 5){
+                $try++;
+                goto first;
+            }else{
+                throw new Exception('第一次登录,验证码识别失败');
+            }
+
+        }
+        $request = $this->client->request('POST',"https://api-takumi.mihoyo.com/account/auth/api/webLoginByPassword",[
             'json' => [
-                'account' => Encrypt::RSA($username,Config('key.mihoyo_web_public_key')),
+                'account' => $username,
+                'geetest_challenge' => $captcha['challenge'],
+                'geetest_seccode' => $captcha['validate'] . '|jordan',
+                'geetest_validate' => $captcha['validate'],
+                'is_bh2' => false,
+                'is_crypto' => true,
+                'mmt_key' => $mihoyo_mmt['mmt_key'],
                 'password' => Encrypt::RSA($password,Config('key.mihoyo_web_public_key')),
-                'token_type' => 4
-            ],
-            'headers' => [
-                'x-rpc-app_version' => Config('key.app_version'),
-                'x-rpc-client_type' => 4,
-                'x-rpc-app_id' => Config('key.app_id'),
+                'token_type' => 6
             ]
         ]);
         $result = $request->getBody()->getContents();
         $login_data = json_decode($result,true);
-        if($login_data['retcode'] == -3101){//遇到验证码
-            //获取头部参数
-            $session_Id = json_decode($request->getHeader('X-Rpc-Aigis')[0],true)['session_id'];
-            $geetest_info = json_decode(json_decode($request->getHeader('X-Rpc-Aigis')[0],true)['data'],true);
-            unset($geetest_info['success'],$geetest_info['new_captcha']);//过滤无用参数
-            try{
-                $captcha = $this->identification_codes($geetest_info['gt'],$geetest_info['challenge'],$this->referer);
-            }catch (Exception $e){
-                throw new Exception('验证码识别失败');
-            }
-            $request = $this->client->post('https://passport-api.miyoushe.com/account/ma-cn-passport/web/loginByPassword',[
+        if($login_data['retcode'] != 0) return $login_data;
+        $source_cookies = $request->getHeaders()['Set-Cookie'];
+        $cookies = [];
+        foreach ($source_cookies as $cookie){
+            preg_match('/(.*?)=(.*?); Path/',$cookie,$matches);
+            if($matches[1] == 'aliyungf_tc') continue;//剔除阿里云的Cookie
+            $cookies[$matches[1]] = $matches[2];
+        }
+        //开始V2版登录
+        $try = 0;
+        second:
+        try{
+            $request = $this->client->request('POST',"https://passport-api.miyoushe.com/account/ma-cn-passport/web/loginByPassword",[
                 'json' => [
                     'account' => Encrypt::RSA($username,Config('key.mihoyo_web_public_key')),
                     'password' => Encrypt::RSA($password,Config('key.mihoyo_web_public_key')),
@@ -291,18 +311,45 @@ class Api extends BaseController
                     'x-rpc-app_version' => Config('key.app_version'),
                     'x-rpc-client_type' => 4,
                     'x-rpc-app_id' => Config('key.app_id'),
-                    'x-rpc-aigis' => "$session_Id;" . base64_encode(json_encode(['geetest_challenge' => $captcha['challenge'],'geetest_seccode' => $captcha['validate'] . '|jordan','geetest_validate' => $captcha['validate']]))
                 ]
             ]);
             $result = $request->getBody()->getContents();
             $login_data = json_decode($result,true);
-        }
-        $source_cookies = $request->getHeaders()['Set-Cookie'];
-        $cookies = [];
-        foreach ($source_cookies as $cookie){
-            preg_match('/(.*?)=(.*?);/',$cookie,$matches);
-            if($matches[1] == 'aliyungf_tc' or $matches[1] == 'acw_tc') continue;//剔除阿里云的Cookie
-            $cookies[$matches[1]] = $matches[2];
+            if($login_data['retcode'] == -3101){//遇到验证码
+                //获取头部参数
+                $session_Id = json_decode($request->getHeader('X-Rpc-Aigis')[0],true)['session_id'];
+                $geetest_info = json_decode(json_decode($request->getHeader('X-Rpc-Aigis')[0],true)['data'],true);
+                unset($geetest_info['success'],$geetest_info['new_captcha']);//过滤无用参数
+                $captcha = $this->identification_codes($geetest_info['gt'],$geetest_info['challenge'],$this->referer);
+                $request = $this->client->post('https://passport-api.miyoushe.com/account/ma-cn-passport/web/loginByPassword',[
+                    'json' => [
+                        'account' => Encrypt::RSA($username,Config('key.mihoyo_web_public_key')),
+                        'password' => Encrypt::RSA($password,Config('key.mihoyo_web_public_key')),
+                        'token_type' => 4
+                    ],
+                    'headers' => [
+                        'x-rpc-app_version' => Config('key.app_version'),
+                        'x-rpc-client_type' => 4,
+                        'x-rpc-app_id' => Config('key.app_id'),
+                        'x-rpc-aigis' => "$session_Id;" . base64_encode(json_encode(['geetest_challenge' => $captcha['challenge'],'geetest_seccode' => $captcha['validate'] . '|jordan','geetest_validate' => $captcha['validate']]))
+                    ]
+                ]);
+                $result = $request->getBody()->getContents();
+                $login_data = json_decode($result,true);
+            }
+            $source_cookies = $request->getHeaders()['Set-Cookie'];
+            foreach ($source_cookies as $cookie){
+                preg_match('/(.*?)=(.*?);/',$cookie,$matches);
+                if($matches[1] == 'aliyungf_tc' or $matches[1] == 'acw_tc') continue;//剔除阿里云的Cookie
+                $cookies[$matches[1]] = $matches[2];
+            }
+        }catch (Exception $e){
+            if($try < $this->try){
+                $try++;
+                goto second;
+            }else{
+                throw new Exception('第二次登录,验证码识别失败');
+            }
         }
         //二次验证
         $request = $this->client->request('POST','https://bbs-api.miyoushe.com/user/wapi/login',[
@@ -328,11 +375,18 @@ class Api extends BaseController
             $cookies[$matches[1]] = $matches[2];
         }
         //开始第二次登录
-        $mihoyo_user_mmt = $this->mihoyo_mmt();
+        $try = 0;
+        third:
         try{
+            $mihoyo_user_mmt = $this->mihoyo_mmt();
             $code_data = $this->identification_codes($mihoyo_user_mmt['gt'],$mihoyo_user_mmt['challenge'],'https://user.mihoyo.com/');
         }catch (\Exception $e){
-            return [];
+            if($try < $this->try){
+                $try++;
+                goto third;
+            }else{
+                throw new Exception('第三次登录,验证码识别失败');
+            }
         }
         $request = $this->client->request('POST','https://webapi.account.mihoyo.com/Api/login_by_password',[
             'form_params' => [
@@ -412,14 +466,14 @@ class Api extends BaseController
         $uid = $this->request->param('uid');
         $cookie = $this->request->cookie();
         if(empty($cookie)) return Response::error(-1,'cookie不能为空');
-        $cookieJar = CookieJar::fromArray($cookie,'.miyoushe.com');
+        $cookieJar = CookieJar::fromArray($cookie,'.mihoyo.com');
         //获取游戏信息
         $request = $this->client->request('GET','https://api-takumi.mihoyo.com/binding/api/getUserGameRolesByCookie?game_biz=hk4e_cn',[
             'cookies' => $cookieJar
         ]);
         $result = $request->getBody()->getContents();
         $game_info = json_decode($result,true);
-        if($game_info['retcode'] != 0) return Response::error(-2,'获取游戏信息失败');
+        if($game_info['retcode'] != 0) return Response::error(-2,'获取游戏信息失败',$game_info);
         //防止账号下多个游戏角色
         if(count($game_info['data']['list']) == 1){
             $region = $game_info['data']['list'][0]['region'];
