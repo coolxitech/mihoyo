@@ -53,7 +53,9 @@ abstract class BaseController
     {
         $this->app     = $app;
         $this->request = $this->app->request;
-        $this->client = new Client();
+        $this->client = new Client([
+
+        ]);
         // 控制器初始化
         $this->initialize();
     }
