@@ -1,7 +1,7 @@
 米哈游API 1.0
 ===============
 
-> 运行环境要求PHP7.4+，兼容PHP8.1
+> 运行环境要求PHP8.0+，兼容PHP8.x
 
 Mihoyo API V1.0版本由[酷曦科技](https://www.kuxi.tech/)独家发布。
 
