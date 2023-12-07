@@ -3,13 +3,13 @@
 //若仓库未更新,请手动从网址的相关JS内搜索setPublicKey进行获取RSA公钥
 //salt值目前采用在线获取其他仓库配置
 //如有更改APP版本意愿请自行获取对应版本salt和DS算法,github上可以借鉴其他仓库代码的DS算法
-if(Config('app.online_key')){
+if(Config('app.online_key')) {
     $online = (new GuzzleHttp\Client())->get('https://git.kuxi.tech/CoolXiTech/MihoyoBBSTools/raw/commit/fda218d9e034cfd1cfd6fb86d1e18196681a583c/setting.py')->getBody()->getContents();
-    preg_match('/mihoyobbs_salt_web = "(.*?)"/',$online,$matches);
+    preg_match('/mihoyobbs_salt_web = "(.*?)"/', $online, $matches);
     $salt = $matches[1];
-    preg_match('/mihoyobbs_version = "(.*?)"/',$online,$matches);
+    preg_match('/mihoyobbs_version = "(.*?)"/', $online, $matches);
     $version = $matches[1];
-}else{
+} else {
     $salt = '0wr0OpH2BNuekYrfeRwkiDdshvt10cTY';
     $version = '2.62.2';
 }
@@ -32,6 +32,7 @@ CgGs52bFoYMtyi+xEQIDAQAB
     'cn_app_salt' => 'pIlzNr5SAZhdnFW8ZxauW8UlxRdZc45r',
     'app_version' => $version,
     'app_id' => 'bll8iq97cem8',
+    'pc_app_id' => 'cie2gjc0sg00',
     'private_key' => '-----BEGIN PRIVATE KEY-----
 MIIkQgIBADANBgkqhkiG9w0BAQEFAASCJCwwgiQoAgEAAoIIAQCzK/juSyyRmy9/
 8aNkXU390cBgOtzscbv0Okv7sSSXOQSzmWmO++eHn/PbIXvi24yTwdlOS6HuUlrb

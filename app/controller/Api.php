@@ -71,10 +71,6 @@ class Api extends BaseController
      */
     public function web_login(string $username, string $password): Json
     {
-//        $data = Response::getParams();
-//        $username = $data['username'];
-//        $password = $data['password'];
-
         //判断账号密码是否为空
         if ($username == '' or $password == '') {
             return Response::error(-1, '账号或密码不能为空');
@@ -91,7 +87,7 @@ class Api extends BaseController
                 'trace' => $e->getTrace()
             ]);
         }
-        halt($login_data);
+
         if (!isset($login_data['account_info'])) {
             return Response::error(-3, '登录失败', $login_data);
         }//没有账号信息即报错
@@ -303,20 +299,20 @@ class Api extends BaseController
         $request = $this->client->request('POST', "https://api-takumi.mihoyo.com/account/auth/api/webLoginByPassword", [
             'json' => [
                 'account' => $username,
+                'password' => Encrypt::RSA($password, Config('key.mihoyo_web_public_key')),
                 'geetest_challenge' => $captcha['challenge'],
                 'geetest_seccode' => $captcha['validate'] . '|jordan',
                 'geetest_validate' => $captcha['validate'],
                 'is_bh2' => false,
                 'is_crypto' => true,
                 'mmt_key' => $mihoyo_mmt['mmt_key'],
-                'password' => Encrypt::RSA($password, Config('key.mihoyo_web_public_key')),
                 'token_type' => 6
             ]
         ]);
         $result = $request->getBody()->getContents();
-        $login_data = json_decode($result, true);
-        if ($login_data['retcode'] != 0) {
-            return $login_data;
+        $genshin_login_data = json_decode($result, true);
+        if ($genshin_login_data['retcode'] != 0) {
+            return $genshin_login_data;
         }
         $source_cookies = $request->getHeaders()['Set-Cookie'];
         $cookies = [];
@@ -338,9 +334,10 @@ class Api extends BaseController
                     'token_type' => 4
                 ],
                 'headers' => [
-                    'x-rpc-app_version' => Config('key.app_version'),
-                    'x-rpc-client_type' => 4,
                     'x-rpc-app_id' => Config('key.app_id'),
+                    'x-rpc-client_type' => 4,
+                    'x-rpc-device_fp' => '38d7f270ed780',
+                    'x-rpc-device_id' => $this->uuid(),
                 ]
             ]);
             $result = $request->getBody()->getContents();
@@ -358,14 +355,19 @@ class Api extends BaseController
                         'token_type' => 4
                     ],
                     'headers' => [
-                        'x-rpc-app_version' => Config('key.app_version'),
-                        'x-rpc-client_type' => 4,
                         'x-rpc-app_id' => Config('key.app_id'),
+                        'x-rpc-client_type' => 4,
+                        'x-rpc-device_fp' => '38d7f270ed780',
+                        'x-rpc-device_id' => $this->uuid(),
                         'x-rpc-aigis' => "$session_Id;" . base64_encode(json_encode(['geetest_challenge' => $captcha['challenge'], 'geetest_seccode' => $captcha['validate'] . '|jordan', 'geetest_validate' => $captcha['validate']]))
                     ]
                 ]);
                 $result = $request->getBody()->getContents();
                 $login_data = json_decode($result, true);
+            } elseif ($login_data['retcode'] == -3006) {
+                throw new Exception('请求频繁');
+            } elseif ($login_data['retcode'] == -461) {
+                throw new Exception('异地登录');
             }
             $source_cookies = $request->getHeaders()['Set-Cookie'];
             foreach ($source_cookies as $cookie) {
@@ -380,7 +382,7 @@ class Api extends BaseController
                 $try++;
                 goto second;
             } else {
-                throw new Exception('第二次登录,验证码识别失败');
+                throw new Exception('第二次登录失败:' . $e->getMessage());
             }
         }
         //二次验证
@@ -450,9 +452,7 @@ class Api extends BaseController
             }//剔除阿里云的Cookie
             $cookies[$matches[1]] = $matches[2];
         }
-//        halt($login_data);
-        return $login_data;
-//        return ['account_info' => $login_data['data']['user_info'], 'cookies' => $cookies];
+        return ['account_info' => $login_data['data']['user_info'], 'cookies' => $cookies];
     }
 
     /**
@@ -608,5 +608,18 @@ class Api extends BaseController
             return Response::error(-2, '获取游戏信息失败');
         }
         return Response::success(0, '获取成功', $game_info['data']['list']);
+    }
+
+    private function uuid(): string
+    {
+        $e = [];
+        $t = '0123456789abcdef';
+        for ($i = 0; $i < 36; $i++) {
+            $e[$i] = $t[rand(0, 15)];
+        }
+        $e[14] = '4';
+        $e[19] = $t[3 & ord($e[19]) | 8];
+        $e[8] = $e[13] = $e[18] = $e[23] = '-';
+        return implode('', $e);
     }
 }
